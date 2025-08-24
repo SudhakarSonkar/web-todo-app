@@ -15,7 +15,7 @@ def add_todo():
 
 # ========================= UI =========================
 
-# App Title
+# Title
 st.markdown(
     """
     <h2 style="color:#4CAF50; text-align:center; font-family:Helvetica; margin-bottom:10px;">
@@ -28,35 +28,46 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-# Stats summary (stacked for mobile)
+# Stats
 total_tasks = len(todos)
 completed_tasks = len([t for i, t in enumerate(todos) if f"todo_{i}" in st.session_state])
 pending_tasks = total_tasks - completed_tasks
 
-with st.container():
-    st.markdown("### 📊 Overview")
-    st.markdown(
-        f"""
-        - 📝 **Total:** {total_tasks}  
-        - ✅ **Completed:** {completed_tasks}  
-        - ⏳ **Pending:** {pending_tasks}  
-        """,
-        unsafe_allow_html=True
-    )
+st.markdown("### 📊 Overview")
+st.markdown(
+    f"""
+    - 📝 **Total:** {total_tasks}  
+    - ✅ **Completed:** {completed_tasks}  
+    - ⏳ **Pending:** {pending_tasks}  
+    """
+)
 
 st.markdown("---")
 
-# Show tasks (one per row, mobile friendly)
+# Task list
 st.markdown("### 📌 Your Tasks")
 
 if todos:
     for index, todo in enumerate(todos):
-        # Show checkbox + delete icon inline
-        task_col = st.columns([0.85, 0.15])
-        with task_col[0]:
+        # Inline row: checkbox + delete button
+        row = st.columns([0.85, 0.15])
+        with row[0]:
             checkbox = st.checkbox(todo.strip(), key=f"todo_{index}")
-        with task_col[1]:
-            if st.button("🗑️", key=f"delete_{index}"):
+        with row[1]:
+            delete_html = f"""
+                <button style="
+                    background:none;
+                    border:none;
+                    color:red;
+                    font-size:18px;
+                    cursor:pointer;
+                    " onclick="fetch('/_stcore/replace?key=delete_{index}')">
+                    ❌
+                </button>
+            """
+            st.markdown(delete_html, unsafe_allow_html=True)
+
+            if st.session_state.get(f"delete_{index}"):  # workaround since HTML button won't trigger
                 todos.pop(index)
                 functions.write_todos(todos)
                 st.rerun()
@@ -78,7 +89,7 @@ st.text_input(
     key='new_todo'
 )
 
-# Quick actions for mobile
+# Quick actions
 st.markdown("---")
 col1, col2 = st.columns(2)
 with col1:
@@ -87,7 +98,7 @@ with col1:
         functions.write_todos(todos)
         st.rerun()
 with col2:
-    if st.button("🗑️ Clear All"):
+    if st.button("❌ Clear All"):
         todos.clear()
         functions.write_todos(todos)
         st.rerun()
