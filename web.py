@@ -10,52 +10,57 @@ def add_todo():
     if todo:
         todos.append(todo + '\n')
         functions.write_todos(todos)
-    st.session_state['new_todo'] = ""  # 🔥 Clear input after adding
+    st.session_state['new_todo'] = ""  # Clear input after adding
 
 
 # ========================= UI =========================
 
-# App Title with custom style
+# App Title
 st.markdown(
     """
-    <h1 style="color:#4CAF50; text-align:center; font-family:Helvetica;">
+    <h2 style="color:#4CAF50; text-align:center; font-family:Helvetica; margin-bottom:10px;">
         ✅ My Todo App
-    </h1>
-    <p style="text-align:center; color:grey; font-size:18px;">
-        Organize your day and increase productivity 🚀
+    </h2>
+    <p style="text-align:center; color:grey; font-size:16px;">
+        Stay organized on the go 🚀
     </p>
     """,
     unsafe_allow_html=True
 )
 
-# Stats summary
-st.subheader("📊 Task Overview")
+# Stats summary (stacked for mobile)
 total_tasks = len(todos)
 completed_tasks = len([t for i, t in enumerate(todos) if f"todo_{i}" in st.session_state])
 pending_tasks = total_tasks - completed_tasks
 
-col1, col2, col3 = st.columns(3)
-col1.metric("📝 Total", total_tasks)
-col2.metric("✅ Completed", completed_tasks)
-col3.metric("⏳ Pending", pending_tasks)
+with st.container():
+    st.markdown("### 📊 Overview")
+    st.markdown(
+        f"""
+        - 📝 **Total:** {total_tasks}  
+        - ✅ **Completed:** {completed_tasks}  
+        - ⏳ **Pending:** {pending_tasks}  
+        """,
+        unsafe_allow_html=True
+    )
 
 st.markdown("---")
 
-# Show existing todos
-st.subheader("📌 Your Tasks")
+# Show tasks (one per row, mobile friendly)
+st.markdown("### 📌 Your Tasks")
 
 if todos:
     for index, todo in enumerate(todos):
-        col1, col2 = st.columns([0.9, 0.1])  # Task + delete button
-        with col1:
+        # Show checkbox + delete icon inline
+        task_col = st.columns([0.85, 0.15])
+        with task_col[0]:
             checkbox = st.checkbox(todo.strip(), key=f"todo_{index}")
-        with col2:
-            if st.button("❌", key=f"delete_{index}"):
+        with task_col[1]:
+            if st.button("🗑️", key=f"delete_{index}"):
                 todos.pop(index)
                 functions.write_todos(todos)
                 st.rerun()
 
-        # If checked, auto-remove
         if checkbox:
             todos.pop(index)
             functions.write_todos(todos)
@@ -64,21 +69,34 @@ if todos:
 else:
     st.info("No tasks yet. Add your first todo below ⬇️")
 
-# Add new todo input
-st.subheader("➕ Add a New Task")
+# Add new task
+st.markdown("### ➕ Add Task")
 st.text_input(
     label="",
-    placeholder="Type your todo and press Enter...",
+    placeholder="Type and press Enter...",
     on_change=add_todo,
     key='new_todo'
 )
 
+# Quick actions for mobile
+st.markdown("---")
+col1, col2 = st.columns(2)
+with col1:
+    if st.button("✅ Mark All Done"):
+        todos.clear()
+        functions.write_todos(todos)
+        st.rerun()
+with col2:
+    if st.button("🗑️ Clear All"):
+        todos.clear()
+        functions.write_todos(todos)
+        st.rerun()
+
 # Footer
 st.markdown(
     """
-    <hr>
-    <p style="text-align:center; color:grey; font-size:14px;">
-        Built with ❤️ using Streamlit
+    <p style="text-align:center; color:grey; font-size:13px; margin-top:20px;">
+        Built with ❤️ using Streamlit | Mobile Optimized 📱
     </p>
     """,
     unsafe_allow_html=True
