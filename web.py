@@ -28,7 +28,7 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-# Stats
+# Stats summary
 total_tasks = len(todos)
 completed_tasks = len([t for i, t in enumerate(todos) if f"todo_{i}" in st.session_state])
 pending_tasks = total_tasks - completed_tasks
@@ -36,10 +36,19 @@ pending_tasks = total_tasks - completed_tasks
 st.markdown("### 📊 Overview")
 st.markdown(
     f"""
-    - 📝 **Total:** {total_tasks}  
-    - ✅ **Completed:** {completed_tasks}  
-    - ⏳ **Pending:** {pending_tasks}  
-    """
+    <div style="display:flex; justify-content:space-around; text-align:center;">
+        <div style="flex:1; padding:8px; background:#f9f9f9; border-radius:10px; margin:3px;">
+            📝 <br><b>{total_tasks}</b><br><span style="font-size:13px; color:grey;">Total</span>
+        </div>
+        <div style="flex:1; padding:8px; background:#f1fff1; border-radius:10px; margin:3px;">
+            ✅ <br><b>{completed_tasks}</b><br><span style="font-size:13px; color:grey;">Completed</span>
+        </div>
+        <div style="flex:1; padding:8px; background:#fff9f1; border-radius:10px; margin:3px;">
+            ⏳ <br><b>{pending_tasks}</b><br><span style="font-size:13px; color:grey;">Pending</span>
+        </div>
+    </div>
+    """,
+    unsafe_allow_html=True
 )
 
 st.markdown("---")
@@ -49,33 +58,41 @@ st.markdown("### 📌 Your Tasks")
 
 if todos:
     for index, todo in enumerate(todos):
-        # Inline row: checkbox + delete button
-        row = st.columns([0.85, 0.15])
-        with row[0]:
-            checkbox = st.checkbox(todo.strip(), key=f"todo_{index}")
-        with row[1]:
-            delete_html = f"""
-                <button style="
+        task_html = f"""
+        <div style="
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+            padding:10px;
+            margin:5px 0;
+            border-radius:8px;
+            background:#f8f9fa;
+            ">
+            <label style="display:flex; align-items:center; font-size:16px; flex:1;">
+                <input type="checkbox" id="chk_{index}" style="margin-right:10px; transform: scale(1.2);" />
+                {todo.strip()}
+            </label>
+            <form action="" method="post">
+                <button name="delete_{index}" type="submit" style="
                     background:none;
                     border:none;
-                    color:red;
+                    color:#ff4d4d;
                     font-size:18px;
                     cursor:pointer;
-                    " onclick="fetch('/_stcore/replace?key=delete_{index}')">
-                    ❌
-                </button>
-            """
-            st.markdown(delete_html, unsafe_allow_html=True)
+                ">✖️</button>
+            </form>
+        </div>
+        """
+        st.markdown(task_html, unsafe_allow_html=True)
 
-            if st.session_state.get(f"delete_{index}"):  # workaround since HTML button won't trigger
-                todos.pop(index)
-                functions.write_todos(todos)
-                st.rerun()
-
-        if checkbox:
+        # Streamlit state handling
+        if st.session_state.get(f"todo_{index}"):
             todos.pop(index)
             functions.write_todos(todos)
-            del st.session_state[f"todo_{index}"]
+            st.rerun()
+        if f"delete_{index}" in st.session_state:
+            todos.pop(index)
+            functions.write_todos(todos)
             st.rerun()
 else:
     st.info("No tasks yet. Add your first todo below ⬇️")
@@ -91,17 +108,23 @@ st.text_input(
 
 # Quick actions
 st.markdown("---")
-col1, col2 = st.columns(2)
-with col1:
-    if st.button("✅ Mark All Done"):
-        todos.clear()
-        functions.write_todos(todos)
-        st.rerun()
-with col2:
-    if st.button("❌ Clear All"):
-        todos.clear()
-        functions.write_todos(todos)
-        st.rerun()
+st.markdown(
+    """
+    <div style="display:flex; justify-content:space-around; margin-top:10px;">
+        <button style="
+            flex:1; margin:5px; padding:10px;
+            background:#4CAF50; color:white;
+            border:none; border-radius:8px; cursor:pointer;
+        ">✅ Mark All Done</button>
+        <button style="
+            flex:1; margin:5px; padding:10px;
+            background:#ff4d4d; color:white;
+            border:none; border-radius:8px; cursor:pointer;
+        ">❌ Clear All</button>
+    </div>
+    """,
+    unsafe_allow_html=True
+)
 
 # Footer
 st.markdown(
